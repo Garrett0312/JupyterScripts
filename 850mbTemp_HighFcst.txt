@@ -1,0 +1,77 @@
+HIGH TEMPERATURE BASED ON WARMEST TEMP IN LOWEST 850MB
+	- Bring down warmest temperature between 850mb & sfc to the SFC dry adiabatically to get the daily high
+		- in other words, find the potential temperature of the warmest layer at the sfc (and not 1000mb like the actual potential temperature calculation)
+	- Key notes:
+		- With light winds the 850mb high temp will likely be warmer than the actual high due to poor mixing
+		- With strong winds the 850mb high will likely be cooler due to a well mixed PBL or low level layer
+		- The method works best in locations near sea level, in the warm season, on barotropic days, with flat topography, on moderate windy cloud-free days.
+
+
+Go to:
+https://jupyter.org/try-jupyter/lab/
+
+
+
+import requests
+from bs4 import BeautifulSoup
+from datetime import date 
+from datetime import datetime, timezone
+
+utchr = (datetime.now(timezone.utc)).strftime("%H")
+
+utc = (datetime.now(timezone.utc)).strftime("%y%m%d")
+
+if int(utchr) in range(3,12):
+    current = str((utc))+"00"
+else:
+    current = str(utc)+"12"
+
+URL = 'https://www.spc.noaa.gov/exper/soundings/'+current+'_OBS/DVN.txt'
+page = requests.get(URL)
+soup = (BeautifulSoup(page.content, 'html.parser'))
+f = (soup.get_text())
+snd = (f[f.find("%RAW%")+6:f.find("%END%")]).split('\n')
+
+dat =[]
+for i in snd[1:-1]:
+    com = i.split(",")
+    t = (com[0]).strip(' ')
+    if float(t) >= 850.00:
+        dat.append(i.split(','))
+data = []
+for i in dat:
+    v=[]
+    for x in i:
+        v.append(float(x))
+    data.append(v)
+
+tmax=([i[2] for i in data]).index(max([i[2] for i in data]))
+
+
+Tmax = round(((((data[tmax][2])+273.15)*((data[0][0]/850)**0.286)-273.15)* (9/5))+32)
+
+print("Sounding data from: DVN at", current)
+print("Today's High will be around:",'%d\N{DEGREE SIGN}' "F" %Tmax)
+
+
+
+
+###############################################################
+###############################################################
+Use this Script for a manual input
+
+
+
+#inpt = await input("Type in the surface pressure (Then a comma), Type the 850mb Temp <°C>")
+###### Place ^^^ in it's own Cell ################
+
+inptn = inpt.split(',')
+
+sfcprs = float(inptn[0])
+t850 = float(inptn[1])
+
+Tmax = round(((((float(t850))+273.15)*((float(sfcprs)/850)**0.286)-273.15)* (9/5))+32)
+
+print("The high will be around:",'%d\N{DEGREE SIGN}' "F" %Tmax)
+
+
